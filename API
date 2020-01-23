@@ -1,0 +1,1211 @@
+using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
+using System.Configuration;
+using System.Data.SqlClient;
+using System.Drawing;
+using System.Drawing.Imaging;
+using System.IO;
+using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Web;
+using System.Web.Http;
+using WebApplication2.Models;
+
+namespace WebApplication2.Controllers
+{
+    public class ValuesController : ApiController
+    {
+        // GET api/values/
+
+
+        SqlConnection sqlconn = new SqlConnection(ConfigurationManager.ConnectionStrings["baderlConnectionString"].ConnectionString);
+
+        baderDB badb = new baderDB();
+
+
+        [HttpGet]
+        public HttpResponseMessage getUserById(int id)
+        {
+            SqlCommand cmd = new SqlCommand();
+            Users us = new Users();
+            List<Users> userList = new List<Users>();
+
+            sqlconn.Open();
+
+            string quere = " SELECT User_Id, First_name, Last_name, Email, Password, City, Active, Type, Date_of_register " +
+                   " FROM Users where User_Id = @User_Id ";
+
+            cmd = new SqlCommand(quere, sqlconn);
+            cmd.Parameters.AddWithValue("@User_Id", id);
+
+            SqlDataReader da = cmd.ExecuteReader();
+            if (da.HasRows)
+            {
+                da.Read();
+
+                us = new Users();
+                us.User_Id = Convert.ToInt32(da["User_Id"].ToString());
+                us.First_name = da["First_name"].ToString();
+                us.Last_name = da["Last_name"].ToString();
+                us.Email = da["Email"].ToString();
+                us.City = da["City"].ToString();
+                userList.Add(us);
+            }
+            else
+            {
+                us = null;
+            }
+            sqlconn.Close();
+
+            var res = Request.CreateResponse(HttpStatusCode.OK);
+            string jsonStr = JsonConvert.SerializeObject(userList);
+            string jsonObject = "{ \"result\" : " + jsonStr + "}";
+            res.Content = new StringContent(jsonObject, System.Text.Encoding.UTF8, "application/json");
+            sqlconn.Close();
+            return res;
+
+
+        }
+
+
+        [HttpGet]
+        public HttpResponseMessage getAllUser()
+        {
+            SqlCommand cmd = new SqlCommand();
+            Users us = new Users();
+            List<Users> userList = new List<Users>();
+            sqlconn.Open();
+
+            string quere = " SELECT User_Id, First_name, Last_name, Email, Password, City, Active, Type, ";
+            quere += " Date_of_register FROM Users  ";
+
+            cmd = new SqlCommand(quere, sqlconn);
+
+            SqlDataReader da = cmd.ExecuteReader();
+            if (da.HasRows)
+            {
+                while (da.Read())
+                {
+                    us = new Users();
+                    us.User_Id = Convert.ToInt32(da["User_Id"].ToString());
+                    us.First_name = da["First_name"].ToString();
+                    us.Last_name = da["Last_name"].ToString();
+
+                    userList.Add(us);
+                }
+
+            }
+            else
+            {
+                us = null;
+            }
+            sqlconn.Close();
+
+            var res = Request.CreateResponse(HttpStatusCode.OK);
+            string jsonStr = JsonConvert.SerializeObject(userList );
+            string jsonObject = "{ \"result\" : " + jsonStr + "}";
+            res.Content = new StringContent(jsonObject, System.Text.Encoding.UTF8, "application/json");
+            sqlconn.Close();
+            return res;
+        }
+
+        // http://amjadsufyani-001-site1.itempurl.com/api/values/getAllCharities
+        // عرض بيانات الجمعيات
+        [HttpGet]
+        public HttpResponseMessage getAllCharities()
+        {
+            SqlCommand cmd = new SqlCommand();
+            Charities_Table charities = new Charities_Table();
+            List<Charities_Table> CharitiesList = new List<Charities_Table>();
+            sqlconn.Open();
+
+            string quere = " SELECT Charity_ID , Name, Address, City, working_hours_week_daysAM, working_hours_week_daysPM, working_hours_Saturday, working_hours_Friday, ";
+            quere += " Coordinate_X , Coordinate_Y , Phone FROM Charities_Table   ";
+
+            cmd = new SqlCommand(quere, sqlconn);
+
+            SqlDataReader da = cmd.ExecuteReader();
+            if (da.HasRows)
+            {
+                while (da.Read())
+                {
+                    charities = new Charities_Table();
+                    charities.Charity_ID = Convert.ToInt32(da["Charity_ID"].ToString());
+                    charities.Name = da["Name"].ToString();
+                    charities.Address = da["Address"].ToString();
+                    charities.Coordinate_X = Convert.ToDouble(da["Coordinate_X"].ToString());
+                    charities.Coordinate_Y = Convert.ToDouble(da["Coordinate_Y"].ToString());
+                    charities.City = da["City"].ToString();
+           
+
+                    CharitiesList.Add(charities);
+                }
+
+            }
+            else
+            {
+                charities = null;
+            }
+            sqlconn.Close();
+
+            var res = Request.CreateResponse(HttpStatusCode.OK);
+            string jsonStr = JsonConvert.SerializeObject(CharitiesList);
+            string jsonObject = "{ \"result\" : " + jsonStr + "}";
+            res.Content = new StringContent(jsonObject, System.Text.Encoding.UTF8, "application/json");
+            sqlconn.Close();
+            return res;
+        }
+
+        // http://localhost:52238/api/values/getCharityDetails?Charity_ID=1
+        // عرض البيانات لكل جمعية
+        [HttpGet]
+        public HttpResponseMessage getCharityDetails(int Charity_ID)
+        {
+            SqlCommand cmd = new SqlCommand();
+            Charities_Table charities = new Charities_Table();
+            List<Charities_Table> CharitiesList = new List<Charities_Table>();
+            sqlconn.Open();
+
+            string quere = " SELECT Charity_ID , Name, Address, City, working_hours_week_daysAM, working_hours_week_daysPM, working_hours_Saturday, working_hours_Friday, ";
+            quere += "  Phone FROM Charities_Table where Charity_ID = @Charity_ID  ";
+
+            cmd = new SqlCommand(quere, sqlconn);
+            cmd.Parameters.AddWithValue("@Charity_ID", Charity_ID);
+
+            SqlDataReader da = cmd.ExecuteReader();
+            if (da.HasRows)
+            {
+                while (da.Read())
+                {
+                    charities = new Charities_Table();
+                    charities.Charity_ID = Convert.ToInt32(da["Charity_ID"].ToString());
+                    charities.Name = da["Name"].ToString();
+                    charities.Address = da["Address"].ToString();
+                    charities.City = da["City"].ToString();
+                    charities.Phone = da["Phone"].ToString();
+                    charities.working_hours_Friday = da["working_hours_Friday"].ToString();
+                    charities.working_hours_Saturday = da["working_hours_Saturday"].ToString();
+                    charities.working_hours_week_daysAM = da["working_hours_week_daysAM"].ToString();
+                    charities.working_hours_week_daysPM = da["working_hours_week_daysPM"].ToString();
+
+                    CharitiesList.Add(charities);
+                }
+
+            }
+            else
+            {
+                charities = null;
+            }
+            sqlconn.Close();
+            var res = Request.CreateResponse(HttpStatusCode.OK);
+            string jsonStr = JsonConvert.SerializeObject(CharitiesList);
+            string jsonObject = "{ \"result\" : " + jsonStr + "}";
+            res.Content = new StringContent(jsonObject, System.Text.Encoding.UTF8, "application/json");
+            sqlconn.Close();
+            return res;
+
+        }
+
+        // عرض الطلبات حقت الابلاغ عن محتاج
+        [HttpGet]
+        public HttpResponseMessage getAllOrders()
+        {
+            SqlCommand cmd = new SqlCommand();
+            Order_Table Orders = new Order_Table();
+            List<Order_Table> OrdersList = new List<Order_Table>();
+
+
+            string quere = " SELECT Order_Id, Name_of_Needy, Order_the_Needy, Address, Contact_Way, Date_of_Add ";
+            quere += "  FROM Order_Table ORDER By Date_of_Add DESC  ";
+
+            try
+            {
+                sqlconn.Open();
+
+                cmd = new SqlCommand(quere, sqlconn);
+
+                SqlDataReader da = cmd.ExecuteReader();
+                if (da.HasRows)
+                {
+                    while (da.Read())
+                    {
+                        Orders = new Order_Table();
+                        Orders.Order_Id = Convert.ToInt32(da["Order_Id"].ToString());
+                        Orders.Name_of_Needy = da["Name_of_Needy"].ToString();
+                        Orders.Order_the_Needy = da["Order_the_Needy"].ToString();
+                        Orders.Address = da["Address"].ToString();
+                        Orders.Contact_Way = da["Contact_Way"].ToString();
+                        Orders.Date_of_Add = Convert.ToDateTime(da["Date_of_Add"].ToString());
+
+                        OrdersList.Add(Orders);
+                    }
+                }
+                else
+                {
+                    Orders = null;
+                }
+                sqlconn.Close();
+
+                var res = Request.CreateResponse(HttpStatusCode.OK);
+                string jsonStr = JsonConvert.SerializeObject(OrdersList);
+                string jsonObject = "{ \"result\" : " + jsonStr + "}";
+                res.Content = new StringContent(jsonObject, System.Text.Encoding.UTF8, "application/json");
+                sqlconn.Close();
+                return res;
+            }
+            catch
+            {
+                sqlconn.Close();
+                return null;
+            }
+        }
+
+
+        //تسجيل دخول
+        [HttpGet]
+        public HttpResponseMessage getLogin(string email, string password)
+        {
+            SqlCommand cmd = new SqlCommand();
+            Users us = new Users();
+
+            sqlconn.Open();
+
+            string quere = " SELECT User_Id, First_name, Last_name, Email, Password, City, Active, Type, Date_of_register  ";
+            quere += " FROM Users WHERE Email = @Email AND Password = @Password AND Active = 1  ";
+
+            cmd = new SqlCommand(quere, sqlconn);
+            cmd.Parameters.AddWithValue("@Email", email);
+            cmd.Parameters.AddWithValue("@Password", password);
+
+
+            SqlDataReader da = cmd.ExecuteReader();
+            if (da.HasRows)
+            {
+
+                da.Read();
+
+                us = new Users();
+                us.User_Id = Convert.ToInt32(da["User_Id"].ToString());
+                us.First_name = da["First_name"].ToString();
+                us.Last_name = da["Last_name"].ToString();
+                us.Email = da["Email"].ToString();
+                us.City = da["city"].ToString();
+                us.Type = Convert.ToInt32(da["Type"].ToString());
+                us.Active = Convert.ToInt32(da["Active"].ToString());
+                us.Password = da["Password"].ToString();
+
+            }
+            else
+            {
+                us = null;
+            }
+            sqlconn.Close();
+            var res = Request.CreateResponse(HttpStatusCode.OK);
+            string jsonStr = JsonConvert.SerializeObject(us);
+            string jsonObject = "{ \"result\" : " + jsonStr + "}";
+            res.Content = new StringContent(jsonObject, System.Text.Encoding.UTF8, "application/json");
+            sqlconn.Close();
+            return res;
+        }
+      
+       
+
+        public string getImageByName(string imageName)
+        {
+            string Path = @"../DonationImage/"+imageName;
+            string ImageFolderPath = HttpContext.Current.Server.MapPath("~/DonationImage/"+imageName);
+            using (Image image = Image.FromFile(ImageFolderPath))
+            {
+                using (MemoryStream m = new MemoryStream())
+                {
+                    image.Save(m, image.RawFormat);
+                    byte[] imageBytes = m.ToArray();
+
+                    // Convert byte[] to Base64 String
+                    string base64String = Convert.ToBase64String(imageBytes);
+                    return base64String;
+                }
+            }
+
+        }
+        //getAllDonations?type=1&status=1
+        // عرض التبرعات 
+        [HttpGet]
+        public HttpResponseMessage getAllDonations(int type, int status)
+        {
+            SqlCommand cmd = new SqlCommand();
+            Donations don = new Donations();
+            List<Donations> DonationsList = new List<Donations>();
+           // string imageName = "";
+            sqlconn.Open();
+
+            string quere = " SELECT Donations.Donation_id , Donations.Name, Donations.Description, Donations.Image, " +
+                          " Users.User_Id, Users.First_name, Users.Last_name, Users.Email, Users.City, Donations.Date_of_Upload " +
+                          " FROM Donations INNER JOIN Users ON " +
+                          " Donations.Id_of_Donor = Users.User_Id where  Order_Status = @status " ;
+
+            quere += (type == 0) ? "  ORDER By Date_of_Upload DESC " : " and Donations.Type = @Type  ORDER By Date_of_Upload DESC";
+
+            cmd = new SqlCommand(quere, sqlconn);
+            cmd.Parameters.AddWithValue("@Type", type);
+            cmd.Parameters.AddWithValue("@status", status);
+
+            SqlDataReader da = cmd.ExecuteReader();
+            if (da.HasRows)
+            {
+                while (da.Read())
+                {
+
+                    don = new Donations();
+                    don.Donation_id = Convert.ToInt32(da["Donation_id"].ToString());
+                    don.Name = da["Name"].ToString();
+                    don.Description = da["Description"].ToString();
+                    don.Image = da["Image"].ToString();
+                    don.Date_of_Upload = Convert.ToDateTime(da["Date_of_Upload"].ToString());
+                    don.user = new Users();
+                    don.user.User_Id = Convert.ToInt32(da["User_Id"].ToString());
+                    don.user.First_name = da["First_name"].ToString();
+                    don.user.Last_name = da["Last_name"].ToString();
+                    don.user.Email = da["Email"].ToString();
+
+                    DonationsList.Add(don);
+                }
+
+            }
+            else
+            {
+                don = null;
+            }
+            sqlconn.Close();
+            var res = Request.CreateResponse(HttpStatusCode.OK);
+            string jsonStr = JsonConvert.SerializeObject(DonationsList);
+            string jsonObject = "{ \"result\" : " + jsonStr + "}";
+            res.Content = new StringContent(jsonObject, System.Text.Encoding.UTF8, "application/json");
+            sqlconn.Close();
+            return res;
+        }
+
+
+        // عرض تفاصيل التبرع
+        [HttpGet]
+        public HttpResponseMessage DonationDetails(int Donation_id)
+        {
+            SqlCommand cmd = new SqlCommand();
+            Donations don = new Donations();
+           // string imageName = "";
+            List<Donations> DonationsList = new List<Donations>();
+            sqlconn.Open();
+
+            string quere = " SELECT  Donations.Donation_id , Donations.Id_of_Needy, Donations.Name, Donations.Description, Donations.Image,Users.User_Id , " +
+                          " Users.First_name, Users.Last_name, Users.Email, Users.City, Donations.Date_of_Upload , Order_Status " +
+                          " FROM Donations INNER JOIN Users " +
+                          " ON Donations.Id_of_Donor = Users.User_Id where Donation_id = @Donation_id ";
+
+            cmd = new SqlCommand(quere, sqlconn);
+            cmd.Parameters.AddWithValue("@Donation_id", Donation_id);
+
+            SqlDataReader da = cmd.ExecuteReader();
+            if (da.HasRows)
+            {
+                while (da.Read())
+                {
+
+                    don = new Donations();
+                    don.Donation_id = Convert.ToInt32(da["Donation_id"].ToString());
+                    don.Name = da["Name"].ToString();
+                    don.Description = da["Description"].ToString();
+                    don.Image = da["Image"].ToString();
+                    don.Id_of_Needy = Convert.ToInt32(da["Id_of_Needy"].ToString());
+                    don.Date_of_Upload = Convert.ToDateTime(da["Date_of_Upload"].ToString());           
+                    don.user = new Users();
+                    don.user.User_Id = Convert.ToInt32(da["User_Id"].ToString());
+                    don.user.First_name = da["First_name"].ToString();
+                    don.user.Last_name = da["Last_name"].ToString();
+                    don.user.Email = da["Email"].ToString();
+                    don.user.City = da["City"].ToString();
+
+                    //imageName = da["Image"].ToString();
+                    //string imageBase64 = getImageByName(imageName);
+                    //don.Image = imageBase64;
+
+                    DonationsList.Add(don);
+
+                }
+
+            }
+            else
+            {
+                don = null;
+            }
+            sqlconn.Close();
+            var res = Request.CreateResponse(HttpStatusCode.OK);
+            string jsonStr = JsonConvert.SerializeObject(DonationsList);
+            string jsonObject = "{ \"result\" : " + jsonStr + "}";
+            res.Content = new StringContent(jsonObject, System.Text.Encoding.UTF8, "application/json");
+            sqlconn.Close();
+            return res;
+        }
+
+
+        // test 
+        [HttpGet]
+        public HttpResponseMessage getAlDons2()
+        {
+            var data = badb.Order_Table.Where(x => x.Order_Id > 0);
+
+            var res = Request.CreateResponse(HttpStatusCode.OK);
+            string jsonStr = JsonConvert.SerializeObject(data.ToList());
+            string jsonObject = "{ \"result\" : " + jsonStr + "}";
+            res.Content = new StringContent(jsonObject, System.Text.Encoding.UTF8, "application/json");
+
+
+
+            return res;
+
+        }
+
+        // تسجيل جديد 
+        [HttpGet]
+        public bool getsign(string Fname, string Lname, string email, string password, string type, string city)
+        {
+            SqlCommand cmd = new SqlCommand();
+            Users us = new Users();
+
+            sqlconn.Open();
+
+            string quere = " IF NOT EXISTS (SELECT Email FROM Users WHERE Email = @Email ) BEGIN " +
+                " INSERT INTO Users(First_name, Last_name, Email, Password, City, Type, Date_of_register) " +
+             " VALUES( @Fname, @Lname ,@Email , @password, @city , @type , GETDATE()) " +
+            " SELECT SCOPE_IDENTITY() as Id END " +
+            " ELSE BEGIN " +
+           " SELECT (0) as Id; END  ";
+
+            cmd = new SqlCommand(quere, sqlconn);
+            cmd.Parameters.AddWithValue("@Fname", Fname);
+            cmd.Parameters.AddWithValue("@Lname", Lname);
+            cmd.Parameters.AddWithValue("@Email", email);
+            cmd.Parameters.AddWithValue("@Password", password);
+            cmd.Parameters.AddWithValue("@city", city);
+            cmd.Parameters.AddWithValue("@type", type);
+
+
+            cmd.ExecuteNonQuery();
+
+  
+
+            return true;
+        }
+
+        //اضافة الجمعيات من الادمن
+        // AddCharities?Name=&Address=&Phone=&City=&Type=&Coordinate_X=&Coordinate_Y=&hours_AM=&hours_PM=&hours_Saturday=&hours_Friday=
+        [HttpGet]
+        public HttpResponseMessage AddCharities( string Name, string Address, string Phone, string City, 
+           float Coordinate_X, float Coordinate_Y, string hours_AM, string hours_PM, string hours_Saturday, string hours_Friday)
+        {
+            SqlCommand cmd = new SqlCommand();
+            Users us = new Users();
+
+            sqlconn.Open();
+
+            string quere = " INSERT INTO Charities_Table ( Name, Address, Phone, City, Coordinate_X, Coordinate_Y, " +
+                " working_hours_week_daysAM, working_hours_week_daysPM, working_hours_Saturday, " +
+             " working_hours_Friday) VALUES(@Name,@Address,@Phone,@City,@Coordinate_X,@Coordinate_Y,@hours_AM,@hours_PM,@hours_Saturday,@hours_Friday) ";
+
+            cmd = new SqlCommand(quere, sqlconn);
+            cmd.Parameters.AddWithValue("@Name", Name);
+            cmd.Parameters.AddWithValue("@Address", Address);
+            cmd.Parameters.AddWithValue("@Phone", Phone);
+            cmd.Parameters.AddWithValue("@City", City);
+            cmd.Parameters.AddWithValue("@Coordinate_X", Coordinate_X);
+            cmd.Parameters.AddWithValue("@Coordinate_Y", Coordinate_Y);
+            cmd.Parameters.AddWithValue("@hours_AM", hours_AM);
+            cmd.Parameters.AddWithValue("@hours_PM", hours_PM);
+            cmd.Parameters.AddWithValue("@hours_Saturday", hours_Saturday);
+            cmd.Parameters.AddWithValue("@hours_Friday", hours_Friday);
+
+
+            cmd.ExecuteNonQuery();
+
+            sqlconn.Close();
+
+            sqlconn.Close();
+            var res = Request.CreateResponse(HttpStatusCode.OK);
+            string jsonStr = JsonConvert.SerializeObject(true);
+            string jsonObject = "{ \"result\" : " + jsonStr + "}";
+            res.Content = new StringContent(jsonObject, System.Text.Encoding.UTF8, "application/json");
+            sqlconn.Close();
+            return res;
+        }
+
+        //AddNeedy?Order_Id=&Name_of_Needy=&Order_the_Needy=&Address=&Contact_Way=
+        //ادراج بيانات المحتاج في فورم الابلاغ عن محتاج 
+        [HttpGet]
+        public bool AddNeedy( string Name_of_Needy, string Order_the_Needy, string Address, string Contact_Way)
+        {
+            SqlCommand cmd = new SqlCommand();
+            Users us = new Users();
+
+            sqlconn.Open();
+
+            string quere = " INSERT INTO Order_Table ( Name_of_Needy, Order_the_Needy, Address, " +
+                " Contact_Way , Date_of_Add ) " +
+             " VALUES( @Name_of_Needy, @Order_the_Needy ,@Address , @Contact_Way, GETDATE()) ";
+
+            cmd = new SqlCommand(quere, sqlconn);
+            cmd.Parameters.AddWithValue("@Name_of_Needy", Name_of_Needy);
+            cmd.Parameters.AddWithValue("@Order_the_Needy", Order_the_Needy);
+            cmd.Parameters.AddWithValue("@Address", Address);
+            cmd.Parameters.AddWithValue("@Contact_Way", Contact_Way);
+
+            cmd.ExecuteNonQuery();
+
+            sqlconn.Close();
+
+            return true;
+        }
+
+        // api/values/getMyOrder?Id_Needy=2
+        // صفحة طلباتي
+        [HttpGet]
+        public HttpResponseMessage getMyOrder(int Id_Needy)
+        {
+            SqlCommand cmd = new SqlCommand();
+            Donations don = new Donations();
+            List<Donations> DonationsList = new List<Donations>();
+            sqlconn.Open();
+
+            string quere = " SELECT Needy_Orders.User_id, Needy_Orders.OrderUser_status, Needy_Orders.Donation_id, Donations.Name,  " +
+            " Donations.Id_of_Needy, Donations.Description , Donations.Order_Status , Donations.Date_of_Upload , Donations.Image " +
+            " FROM Needy_Orders INNER JOIN Donations " +
+            " ON Needy_Orders.Donation_id = Donations.Donation_id INNER JOIN " +
+            " Users ON Needy_Orders.User_id = Users.User_Id " +
+            " WHERE (Needy_Orders.User_id = @Id_Needy) ORDER By Date_of_Upload DESC ";
+
+            cmd = new SqlCommand(quere, sqlconn);
+            cmd.Parameters.AddWithValue("@Id_Needy", Id_Needy);
+
+
+            SqlDataReader da = cmd.ExecuteReader();
+            if (da.HasRows)
+            {
+                while (da.Read())
+                {
+
+                    don = new Donations();
+                    don.Donation_id = Convert.ToInt32(da["Donation_id"].ToString());
+                    don.Name = da["Name"].ToString();
+                    don.Description = da["Description"].ToString();
+                    don.Id_of_Needy = Convert.ToInt32(da["Id_of_Needy"].ToString());
+                    don.Image = da["Image"].ToString();
+                    don.Date_of_Upload = Convert.ToDateTime(da["Date_of_Upload"].ToString());
+                    don.Order_Status = Convert.ToInt32(da["Order_Status"].ToString());
+                    don.needy = new Needy_Orders();
+                    don.needy.Donation_id = Convert.ToInt32(da["Donation_id"].ToString());
+                    don.needy.User_id = Convert.ToInt32(da["User_id"].ToString());
+                    don.needy.OrderUser_status = Convert.ToInt32(da["OrderUser_status"].ToString());
+
+
+                    DonationsList.Add(don);
+                }
+
+            }
+            else
+            {
+                don = null;
+            }
+            sqlconn.Close();
+            var res = Request.CreateResponse(HttpStatusCode.OK);
+            string jsonStr = JsonConvert.SerializeObject(DonationsList);
+            string jsonObject = "{ \"result\" : " + jsonStr + "}";
+            res.Content = new StringContent(jsonObject, System.Text.Encoding.UTF8, "application/json");        
+            sqlconn.Close();
+            return res;
+        }
+
+        // صفحة تبرعاتي
+        //MyDonations?User_Id=4
+        [HttpGet]
+        public HttpResponseMessage MyDonations(int User_Id)
+        {
+            SqlCommand cmd = new SqlCommand();
+            Donations don = new Donations();
+            List<Donations> DonationsList = new List<Donations>();
+            sqlconn.Open();
+
+            string quere = " SELECT Donations.Donation_id, Donations.Name,Donations.Id_of_Needy, Donations.Description, Donations.Image,Users.User_Id , " +
+                          " Users.First_name, Users.Last_name, Users.Email, Users.City, Donations.Date_of_Upload , Order_Status " +
+                          " FROM Donations INNER JOIN Users " +
+                          " ON Donations.Id_of_Donor = Users.User_Id where User_Id = @User_Id ";
+
+            cmd = new SqlCommand(quere, sqlconn);
+            cmd.Parameters.AddWithValue("@User_Id", User_Id);
+
+            SqlDataReader da = cmd.ExecuteReader();
+            if (da.HasRows)
+            {
+                while (da.Read())
+                {
+
+                    don = new Donations();
+                    don.Donation_id = Convert.ToInt32(da["Donation_id"].ToString());
+                    don.Name = da["Name"].ToString();
+                    don.Description = da["Description"].ToString();
+                    don.Image = da["Image"].ToString();
+                    don.Date_of_Upload = Convert.ToDateTime(da["Date_of_Upload"].ToString());
+
+                    DonationsList.Add(don);
+                }
+
+            }
+            else
+            {
+                don = null;
+            }
+            sqlconn.Close();
+            var res = Request.CreateResponse(HttpStatusCode.OK);
+            string jsonStr = JsonConvert.SerializeObject(DonationsList);
+            string jsonObject = "{ \"result\" : " + jsonStr + "}";
+            res.Content = new StringContent(jsonObject, System.Text.Encoding.UTF8, "application/json");
+            sqlconn.Close();
+            return res;
+        }
+
+        //getMyDonationsDetails?Donation_id=2
+        // صفحة تفاصيل التبرع داخل صفحة تبرعاتي
+        [HttpGet]
+        public HttpResponseMessage getMyDonationsDetails (int Donation_id)
+        {
+            SqlCommand cmd = new SqlCommand();
+            Donations don = new Donations();
+            List<Donations> DonationsList = new List<Donations>();
+            sqlconn.Open();
+
+            string quere = " SELECT Donations.Donation_id ,Donations.Id_of_Needy ,Donations.Name ,Donations.Image  ,Needy_Orders.OrderUser_status, Users.First_name, Users.Last_name " +
+            " FROM  Needy_Orders INNER JOIN Donations " +
+            " ON Needy_Orders.donation_id = Donations.Donation_id INNER JOIN " +
+            " Users ON Needy_Orders.user_id = Users.User_Id where Donations.Donation_id = @Donation_id "; 
+
+            cmd = new SqlCommand(quere, sqlconn);
+            
+            cmd.Parameters.AddWithValue("@Donation_id", Donation_id);
+
+            SqlDataReader da = cmd.ExecuteReader();
+            if (da.HasRows)
+            {
+                while (da.Read())
+                {
+
+                    don = new Donations();
+                    don.Donation_id = Convert.ToInt32(da["Donation_id"].ToString());
+                    don.Date_of_Upload = Convert.ToDateTime(da["Date_of_Upload"].ToString());
+                    don.Name = da["Name"].ToString();
+                    don.Image = da["Image"].ToString();
+                    don.needy = new Needy_Orders();
+                    don.Id_of_Needy = Convert.ToInt32(da["Id_of_Needy"].ToString());
+                    don.needy.OrderUser_status = Convert.ToInt32(da["OrderUser_status"].ToString());
+                    don.user = new Users();
+                    don.user.First_name = da["First_name"].ToString();
+                    don.user.Last_name = da["Last_name"].ToString();
+                   
+                    DonationsList.Add(don);
+                }
+
+            }
+            else
+            {
+                don = null;
+            }
+            sqlconn.Close();
+            var res = Request.CreateResponse(HttpStatusCode.OK);
+            string jsonStr = JsonConvert.SerializeObject(DonationsList);
+            string jsonObject = "{ \"result\" : " + jsonStr + "}";
+            res.Content = new StringContent(jsonObject, System.Text.Encoding.UTF8, "application/json");
+            sqlconn.Close();
+            return res;
+        }
+
+       
+
+
+        [HttpPost]
+        public HttpResponseMessage AddDonations([FromBody]Donations don)
+        {
+            
+
+            SqlCommand cmd = new SqlCommand();
+            int Id = -1;
+            sqlconn.Open();
+
+            string quere = " INSERT INTO Donations ( Name, Description,Type, Date_of_Upload , Id_of_Donor ,Image  )  " +
+                " VALUES ( @Name, @Description, @Type, GETDATE() , @Id_of_Donor ,@imageBase  ); " +
+                " SELECT SCOPE_IDENTITY() as Id ";
+
+
+            cmd = new SqlCommand(quere, sqlconn);
+
+            cmd.Parameters.AddWithValue("@Name", don.Name);
+            cmd.Parameters.AddWithValue("@Description", don.Description);
+            cmd.Parameters.AddWithValue("@Type", don.Type);
+            cmd.Parameters.AddWithValue("@Id_of_Donor", don.Id_of_Donor);
+            cmd.Parameters.AddWithValue("@imageBase", don.Image);
+
+
+            SqlDataReader da = cmd.ExecuteReader();
+            if (da.HasRows)
+            {
+                da.Read();
+                Id = Convert.ToInt32(da["Id"].ToString());
+
+            }
+            else
+            {
+                Id = 0;
+            }
+
+            sqlconn.Close();
+
+            var res = Request.CreateResponse(HttpStatusCode.OK);
+            string jsonStr = JsonConvert.SerializeObject(Id);
+            string jsonObject = "{ \"result\" : " + jsonStr + "}";
+            res.Content = new StringContent(jsonObject, System.Text.Encoding.UTF8, "application/json");
+
+            return res;
+        }
+
+
+
+        [HttpGet]
+        public bool addimage(string imageName , string imageBase)
+        {
+            //string ImageBase64 ; 
+            string ImageFolderPath = HttpContext.Current.Server.MapPath("~/DonationImage");
+            try
+            {
+                //set the image path
+                string imgPath = Path.Combine(ImageFolderPath, imageName);
+
+                byte[] imageBytes = Convert.FromBase64String(imageBase);
+
+                File.WriteAllBytes(imgPath, imageBytes);
+
+
+
+                return true;
+            }
+            catch (IOException e)
+            {
+                string excep = e.ToString();
+                return false;
+            }
+        }
+
+
+
+        // تسجيل جديد
+        //getsign2?Fname=qq&Lname=aa&email=gg&password=7788&type=2&city=hh
+        [HttpGet]
+        public HttpResponseMessage getsign2(string Fname, string Lname, string email, string password, string type, string city)
+        {
+
+            SqlCommand cmd = new SqlCommand();
+            Users us = new Users();
+            int Id = -1;
+
+            sqlconn.Open();
+
+            string quere = " IF NOT EXISTS (SELECT Email FROM Users WHERE Email = @Email ) BEGIN " +
+                " INSERT INTO Users(First_name, Last_name, Email, Password, City, Type, Date_of_register) " +
+             " VALUES( @Fname, @Lname ,@Email , @password, @city , @type , GETDATE()) " +
+            " SELECT SCOPE_IDENTITY() as Id END " +
+            " ELSE BEGIN " +
+           " SELECT (0) as Id ; END  ";
+
+            cmd = new SqlCommand(quere, sqlconn);
+            cmd.Parameters.AddWithValue("@Fname", Fname);
+            cmd.Parameters.AddWithValue("@Lname", Lname);
+            cmd.Parameters.AddWithValue("@Email", email);
+            cmd.Parameters.AddWithValue("@Password", password);
+            cmd.Parameters.AddWithValue("@city", city);
+            cmd.Parameters.AddWithValue("@type", type);
+
+            SqlDataReader da = cmd.ExecuteReader();
+            if (da.HasRows)
+            {
+                da.Read();
+                Id = Convert.ToInt32(da["Id"].ToString());
+
+            }
+            sqlconn.Close();
+
+            var res = Request.CreateResponse(HttpStatusCode.OK);
+            string jsonStr = JsonConvert.SerializeObject(Id);
+            string jsonObject = "{ \"result\" : " + jsonStr + "}";
+            res.Content = new StringContent(jsonObject, System.Text.Encoding.UTF8, "application/json");
+            sqlconn.Close();
+            return res;
+        }
+
+        [HttpGet]
+        public HttpResponseMessage Admin()
+        {
+            SqlCommand cmd = new SqlCommand();
+            Dashboard dashboard = new Dashboard();
+            List<Dashboard> dashboardList = new List<Dashboard>();
+            sqlconn.Open();
+
+            string quere = " DECLARE @Count_Donations INT = (SELECT Count (Donation_id) From Donations) " +
+                            " DECLARE @Count_Users INT = (SELECT Count(User_Id) From Users ) " +
+
+                            " SELECT @Count_Donations as Num_of_Donations, " +
+                            " (SELECT Count(Donation_id) From Donations where Type = 1) as Num_of_Clothes, " +
+                            " (SELECT Count(Donation_id) From Donations where Type = 2) as Num_of_ElectricMachines, " +
+                            " (SELECT Count(Donation_id) From Donations where Type = 3) as Num_of_Furniture, " +
+                           "  (SELECT Count(Donation_id) From Donations where Type = 4) as Num_of_Paper, " +
+
+                           " (SELECT(100 * (SELECT Count(Donation_id) From Donations where Type = 1)) / @Count_Donations) as Clothes_Percent , " +
+                           " (SELECT(100 * (SELECT Count(Donation_id) From Donations where Type = 2)) / @Count_Donations) as ElectricMachines_Percent , " +
+                           " (SELECT(100 * (SELECT Count(Donation_id) From Donations where Type = 3)) / @Count_Donations) as Furniture_Percent , " +
+                          "  (SELECT(100 * (SELECT Count(Donation_id) From Donations where Type = 4)) / @Count_Donations) as Paper_Percent , " +
+
+                          " (SELECT(100 * (SELECT Count(Donation_id) From Donations where Order_Status = 2)) / @Count_Donations) as Available_Percent , " +
+                           " (SELECT(100 * (SELECT Count(Donation_id) From Donations where Order_Status = 3)) / @Count_Donations) as expiry_Percent , " +
+
+                           " @Count_Users as Number_of_Users , " +
+                           " (SELECT Count(User_id) From Users  where Active = 1) as Num_of_Active_Users , " +
+                           " (SELECT Count(User_id) From Users  where Active = 0) as Num_of_UnActive_Users , " +
+                           " (SELECT(100 * (SELECT Count(User_id) From Users  where Active = 1)) / @Count_Users) as Active_Percent , " +
+                           " (SELECT(100 * (SELECT Count(User_id) From Users  where Active = 0)) / @Count_Users) as UnActive_Percent , " +
+
+                           " (SELECT Count(User_id) From Users  where Type = 1) as Num_of_Donors , " +
+                           " (SELECT Count(User_id) From Users  where Type = 2) as Num_of_Needy , " +
+                           " (SELECT Count(User_id) From Users  where Type = 3) as Num_of_voluteers, " +
+
+                           " (SELECT(100 * (SELECT Count(User_id) From Users  where Type = 1)) / @Count_Users) as Donors_Percent , " +
+                           " (SELECT(100 * (SELECT Count(User_id) From Users  where Type = 2)) / @Count_Users) as Needy_Percent , " +
+                           " (SELECT(100 * (SELECT Count(User_id) From Users  where Type = 3)) / @Count_Users) as voluteers_Percent , " +
+
+                           " (SELECT Count(Charity_ID) From Charities_Table) as Num_of_Charities , " +
+                           " (SELECT Count(Order_Id) From Order_Table ) as Num_of_Order"; 
+
+            cmd = new SqlCommand(quere, sqlconn);
+
+            SqlDataReader da = cmd.ExecuteReader();
+            if (da.HasRows)
+            {
+                while (da.Read())
+                {
+                   
+                    dashboard.Num_of_Donations = Convert.ToInt32(da["Num_of_Donations"].ToString());
+                    dashboard.Num_of_Clothes = Convert.ToInt32(da["Num_of_Clothes"].ToString());
+                    dashboard.Num_of_ElectricMachines = Convert.ToInt32(da["Num_of_ElectricMachines"].ToString());
+                    dashboard.Num_of_Furniture = Convert.ToInt32(da["Num_of_Furniture"].ToString());
+                    dashboard.Num_of_Paper = Convert.ToInt32(da["Num_of_Paper"].ToString());
+                    dashboard.Clothes_Percent = Convert.ToInt32(da["Clothes_Percent"].ToString());
+                    dashboard.ElectricMachines_Percent = Convert.ToInt32(da["ElectricMachines_Percent"].ToString());
+                    dashboard.Furniture_Percent = Convert.ToInt32(da["Furniture_Percent"].ToString());
+                    dashboard.Paper_Percent = Convert.ToInt32(da["Paper_Percent"].ToString());
+                    dashboard.Available_Percent = Convert.ToInt32(da["Available_Percent"].ToString());
+                    dashboard.expiry_Percent = Convert.ToInt32(da["expiry_Percent"].ToString());
+                    dashboard.Number_of_Users = Convert.ToInt32(da["Number_of_Users"].ToString());
+                    dashboard.Num_of_Active_Users = Convert.ToInt32(da["Num_of_Active_Users"].ToString());
+                    dashboard.Num_of_UnActive_Users = Convert.ToInt32(da["Num_of_UnActive_Users"].ToString());
+                    dashboard.UnActive_Percent = Convert.ToInt32(da["UnActive_Percent"].ToString());
+                    dashboard.Active_Percent = Convert.ToInt32(da["Active_Percent"].ToString());
+                    dashboard.Num_of_Donors = Convert.ToInt32(da["Num_of_Donors"].ToString());
+                    dashboard.Num_of_Needy = Convert.ToInt32(da["Num_of_Needy"].ToString());
+                    dashboard.Num_of_voluteers = Convert.ToInt32(da["Num_of_voluteers"].ToString());
+                    dashboard.Donors_Percent = Convert.ToInt32(da["Donors_Percent"].ToString());
+                    dashboard.Needy_Percent = Convert.ToInt32(da["Needy_Percent"].ToString());
+                    dashboard.voluteers_Percent = Convert.ToInt32(da["voluteers_Percent"].ToString());
+                    dashboard.Num_of_Charities = Convert.ToInt32(da["Num_of_Charities"].ToString());
+                    dashboard.Num_of_Order = Convert.ToInt32(da["Num_of_Order"].ToString());
+
+                    dashboardList.Add(dashboard);
+
+                }
+
+            }
+       
+            sqlconn.Close();
+            var res = Request.CreateResponse(HttpStatusCode.OK);
+            string jsonStr = JsonConvert.SerializeObject(dashboardList);
+            string jsonObject = "{ \"result\" : " + jsonStr + "}";
+            res.Content = new StringContent(jsonObject, System.Text.Encoding.UTF8, "application/json");
+            sqlconn.Close();
+            return res;
+        }
+
+        // updateWhenAccepteOne?User_Id=2&Donation_id=13
+        [HttpGet]
+        public HttpResponseMessage updateWhenAccepteOne(int User_Id , int Donation_id)
+        {
+            SqlCommand cmd = new SqlCommand();
+
+            try
+            {
+                sqlconn.Open();
+
+                string quere = " UPDATE Needy_Orders SET OrderUser_status = 2  FROM  Needy_Orders  " +
+                "  where User_id = @User_Id and Donation_id = @Donation_id ; " +
+                " UPDATE Needy_Orders SET OrderUser_status = 3  FROM  Needy_Orders  " +
+                "  where User_id != @User_Id and Donation_id = @Donation_id ; " +
+                " UPDATE Donations SET Order_Status = 2  FROM Donations  " +
+                "  where Donation_id = @Donation_id ; UPDATE Donations SET Id_of_Needy = @User_Id  FROM Donations  where Donation_id = @Donation_id";
+                 
+
+                cmd = new SqlCommand(quere, sqlconn);
+                cmd.Parameters.AddWithValue("@User_Id", User_Id);
+                cmd.Parameters.AddWithValue("@Donation_id", Donation_id);
+
+
+                SqlDataReader da = cmd.ExecuteReader();
+
+                sqlconn.Close();
+                var res = Request.CreateResponse(HttpStatusCode.OK);
+                string jsonStr = JsonConvert.SerializeObject(true);
+                string jsonObject = "{ \"result\" : " + jsonStr + "}";
+                res.Content = new StringContent(jsonObject, System.Text.Encoding.UTF8, "application/json");
+                sqlconn.Close();
+                return res;
+            }
+            catch
+            {
+                sqlconn.Close();
+                var res = Request.CreateResponse(HttpStatusCode.OK);
+                string jsonStr = JsonConvert.SerializeObject(false);
+                string jsonObject = "{ \"result\" : " + jsonStr + "}";
+                res.Content = new StringContent(jsonObject, System.Text.Encoding.UTF8, "application/json");
+                sqlconn.Close();
+                return res;
+            }          
+        }
+
+        [HttpGet]
+        public HttpResponseMessage updateWhenOrder(int User_Id, int Donation_id)
+        {
+            SqlCommand cmd = new SqlCommand();
+
+            try
+            {
+                sqlconn.Open();
+
+                string quere = " INSERT INTO Needy_Orders (User_id, Donation_id, OrderUser_status) " +
+                                " VALUES(@User_Id, @Donation_id, 1); UPDATE Donations SET Order_Status = 2  FROM Donations " +
+                                " where Donation_id = @Donation_id ";
+
+
+                cmd = new SqlCommand(quere, sqlconn);
+                cmd.Parameters.AddWithValue("@User_Id", User_Id);
+                cmd.Parameters.AddWithValue("@Donation_id", Donation_id);
+
+
+                SqlDataReader da = cmd.ExecuteReader();
+
+                sqlconn.Close();
+                var res = Request.CreateResponse(HttpStatusCode.OK);
+                string jsonStr = JsonConvert.SerializeObject(true);
+                string jsonObject = "{ \"result\" : " + jsonStr + "}";
+                res.Content = new StringContent(jsonObject, System.Text.Encoding.UTF8, "application/json");
+                sqlconn.Close();
+                return res;
+            }
+            catch
+            {
+                sqlconn.Close();
+                var res = Request.CreateResponse(HttpStatusCode.OK);
+                string jsonStr = JsonConvert.SerializeObject(false);
+                string jsonObject = "{ \"result\" : " + jsonStr + "}";
+                res.Content = new StringContent(jsonObject, System.Text.Encoding.UTF8, "application/json");
+                sqlconn.Close();
+                return res;
+
+            }
+        }
+
+        [HttpGet]
+        public HttpResponseMessage updateWhenOrderDeliver(int Donation_id)
+        {
+            SqlCommand cmd = new SqlCommand();
+
+            try
+            {
+                sqlconn.Open();
+
+                string quere = " UPDATE Donations SET Order_Status = 3 FROM Donations INNER JOIN " +
+                                " Needy_Orders ON Donations.Donation_id = Needy_Orders.Donation_id where Donations.Donation_id = @Donation_id " +
+                                " and Needy_Orders.OrderUser_status = 2 ";
+
+                cmd = new SqlCommand(quere, sqlconn);
+                cmd.Parameters.AddWithValue("@Donation_id", Donation_id);
+
+                SqlDataReader da = cmd.ExecuteReader();
+
+                sqlconn.Close();
+                var res = Request.CreateResponse(HttpStatusCode.OK);
+                string jsonStr = JsonConvert.SerializeObject(true);
+                string jsonObject = "{ \"result\" : " + jsonStr + "}";
+                res.Content = new StringContent(jsonObject, System.Text.Encoding.UTF8, "application/json");
+                sqlconn.Close();
+                return res;
+            }
+            catch
+            {
+                sqlconn.Close();
+                var res = Request.CreateResponse(HttpStatusCode.OK);
+                string jsonStr = JsonConvert.SerializeObject(false);
+                string jsonObject = "{ \"result\" : " + jsonStr + "}";
+                res.Content = new StringContent(jsonObject, System.Text.Encoding.UTF8, "application/json");
+                sqlconn.Close();
+                return res;
+            }
+
+        }
+
+        [HttpGet]
+        public HttpResponseMessage getNeedyNames(int Donation_id)
+        {
+            SqlCommand cmd = new SqlCommand();
+            Donations don = new Donations();
+            List<Donations> DonationsList = new List<Donations>();
+            sqlconn.Open();
+
+            string quere = " SELECT Needy_Orders.ID , Needy_Orders.User_id, Needy_Orders.OrderUser_status, Needy_Orders.Donation_id, Users.First_name, " +
+                " Users.Last_name , Users.Email , Users.City FROM Needy_Orders INNER JOIN Users ON " +
+                " Needy_Orders.User_id = Users.User_Id where Donation_id = @Donation_id ";
+
+            cmd = new SqlCommand(quere, sqlconn);
+
+            cmd.Parameters.AddWithValue("@Donation_id", Donation_id);
+
+            SqlDataReader da = cmd.ExecuteReader();
+            if (da.HasRows)
+            {
+                while (da.Read())
+                {
+
+                    don = new Donations();
+                    don.Donation_id = Convert.ToInt32(da["Donation_id"].ToString());
+                    don.needy = new Needy_Orders();
+                    don.needy.User_id = Convert.ToInt32(da["User_id"].ToString());
+                    don.needy.ID = Convert.ToInt32(da["ID"].ToString());
+                    don.needy.Donation_id = Convert.ToInt32(da["Donation_id"].ToString());
+                    don.needy.OrderUser_status = Convert.ToInt32(da["OrderUser_status"].ToString());
+                    don.user = new Users();
+                    don.user.User_Id = Convert.ToInt32(da["User_Id"].ToString());
+                    don.user.First_name = da["First_name"].ToString();
+                    don.user.Last_name = da["Last_name"].ToString();
+                    don.user.Email = da["Email"].ToString();
+                    don.user.City = da["City"].ToString();
+
+                    DonationsList.Add(don);
+                }
+
+            }
+            else
+            {
+                don = null;
+            }
+            sqlconn.Close();
+            var res = Request.CreateResponse(HttpStatusCode.OK);
+            string jsonStr = JsonConvert.SerializeObject(DonationsList);
+            string jsonObject = "{ \"result\" : " + jsonStr + "}";
+            res.Content = new StringContent(jsonObject, System.Text.Encoding.UTF8, "application/json");
+            sqlconn.Close();
+            return res;
+        }
+
+        [HttpGet]
+        public HttpResponseMessage DeliverPage()
+        {
+            SqlCommand cmd = new SqlCommand();
+            Donations don = new Donations();
+            List<Donations> DonationsList = new List<Donations>();
+            sqlconn.Open();
+
+            string quere = " SELECT Needy_Orders.User_id, Needy_Orders.OrderUser_status, Donations.Donation_id, Donations.Name, Donations.Image, Donations.Order_Status," +
+                         "Users.User_Id, Users.First_name, Users.Last_name, Users.Email, Users.City FROM Needy_Orders INNER JOIN " +
+                        " Donations ON Needy_Orders.Donation_id = Donations.Donation_id INNER JOIN "+
+                        " Users ON Needy_Orders.User_id = Users.User_Id where Donations.Order_Status = 3 and Needy_Orders.OrderUser_status = 2  ";
+
+            cmd = new SqlCommand(quere, sqlconn);
+
+            SqlDataReader da = cmd.ExecuteReader();
+            if (da.HasRows)
+            {
+                while (da.Read())
+                {
+
+                    don = new Donations();
+                    don.Donation_id = Convert.ToInt32(da["Donation_id"].ToString());
+                    don.Name = da["Name"].ToString();
+                     don.Image = da["Image"].ToString();
+                    don.needy = new Needy_Orders();
+                    don.needy.Donation_id = Convert.ToInt32(da["Donation_id"].ToString());
+                    don.needy.User_id = Convert.ToInt32(da["User_id"].ToString());
+                    don.needy.OrderUser_status = Convert.ToInt32(da["OrderUser_status"].ToString());
+                    don.user = new Users();
+                    don.user.User_Id = Convert.ToInt32(da["User_Id"].ToString());
+                    don.user.First_name = da["First_name"].ToString();
+                    don.user.Last_name = da["Last_name"].ToString();
+                    don.user.Email = da["Email"].ToString();
+                    don.user.City = da["City"].ToString();
+                    DonationsList.Add(don);
+                }
+
+            }
+            else
+            {
+                don = null;
+            }
+            sqlconn.Close();
+            var res = Request.CreateResponse(HttpStatusCode.OK);
+            string jsonStr = JsonConvert.SerializeObject(DonationsList);
+            string jsonObject = "{ \"result\" : " + jsonStr + "}";
+            res.Content = new StringContent(jsonObject, System.Text.Encoding.UTF8, "application/json");
+            sqlconn.Close();
+            return res;
+        }
+
+
+        // http://amjadsufyani-001-site1.itempurl.com/api/values/updateWhenDonerDelivery?Donation_id=6
+        [HttpGet]
+        public HttpResponseMessage updateWhenDonerDelivery(int Donation_id)
+        {
+            SqlCommand cmd = new SqlCommand();
+
+            try
+            {
+                sqlconn.Open();
+
+                string quere = " UPDATE Donations SET Order_Status = 4 FROM Donations where Donation_id = @Donation_id ";
+                               
+
+                cmd = new SqlCommand(quere, sqlconn);              
+                cmd.Parameters.AddWithValue("@Donation_id", Donation_id);
+
+                SqlDataReader da = cmd.ExecuteReader();
+
+                sqlconn.Close();
+                var res = Request.CreateResponse(HttpStatusCode.OK);
+                string jsonStr = JsonConvert.SerializeObject(true);
+                string jsonObject = "{ \"result\" : " + jsonStr + "}";
+                res.Content = new StringContent(jsonObject, System.Text.Encoding.UTF8, "application/json");
+                sqlconn.Close();
+                return res;
+            }
+            catch
+            {
+                sqlconn.Close();
+                var res = Request.CreateResponse(HttpStatusCode.OK);
+                string jsonStr = JsonConvert.SerializeObject(false);
+                string jsonObject = "{ \"result\" : " + jsonStr + "}";
+                res.Content = new StringContent(jsonObject, System.Text.Encoding.UTF8, "application/json");
+                sqlconn.Close();
+                return res;
+            }
+
+        }
+    }
+}
